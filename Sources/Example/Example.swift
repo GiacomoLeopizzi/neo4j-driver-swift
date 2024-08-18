@@ -1,44 +1,3 @@
-# Neo4J Swift Driver
-
-> [!WARNING]
-> This library is currently under active development. It may contain bugs, and its API is subject to change until the first stable release is published. Please use with caution and expect potential breaking changes in future updates.
-
-
-This is a Swift Package that provides a convenient way to communicate with [Neo4J](https://neo4j.com) servers using the Bolt protocol v5.4.
-
-## Getting Started
-
-### Overview
-
-The package includes three libraries:
-
-- **PackStream**: Handles encoding and decoding binary data using the PackStream protocol. Typically, users of this library won't need to interact with it directly.
-- **Bolt**: Facilitates communication using the Bolt protocol. This library exposes types that allow developers to interact with a Neo4J database using the raw Bolt protocol.
-- **Neo4J**: This is the primary library most developers will use. It wraps the Bolt library, providing a more "Swifty" API for database interaction. This library is recommended for most use cases, though it also exposes the underlying Bolt connection for more specific scenarios.
-
-
-> [!TIP]
-> Use the Neo4J library to start and, only if really needed, use the Bolt library.
-
-### Adding the Dependency
-
-To add this package as a dependency, include it in your `Package.swift`:
-
-```swift
-.package(url: "https://github.com/GiacomoLeopizzi/neo4j-driver-swift.git", from: "0.0.0"),
-```
-
-Add `Neo4J` to your application's target dependencies:
-
-```swift
-.product(name: "Neo4J", package: "neo4j-driver-swift")
-```
-
-### Neo4J Connection API
-
-Here's an example of how to use `Neo4JConnection` in a program:
-
-```swift
 import Neo4J
 import Logging
 import NIOPosix
@@ -130,16 +89,3 @@ struct Example {
         }
     }
 }
-```
-
-## Contributing
-
-Contributions are highly encouraged as the library is still under development. Some of the pending features include:
-
-- Completing the documentation and improving the examples;
-- Extending and finishing the test suite using the Swift Testing library;
-- Reviewing the Neo4J API to make it easier to work with Node and Relationship types, including methods to create and fetch them without manually writing Cypher queries;
-- Creating a declarative syntax for expressing Cypher queries that allows for runtime and compile-time checks;
-- Fixing bugs that may exist and addressing issues reported on GitHub.
-
-Special thanks to [@SMartorelli](https://github.com/SMartorelli) and [@ndPPPhz](https://github.com/ndPPPhz) for their contributions to this project!
