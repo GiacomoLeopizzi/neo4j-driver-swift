@@ -33,7 +33,7 @@ public actor Neo4JConnection: Service {
     ///   - eventLoopGroup: The event loop group used to open the connection.
     public init(configuration: Neo4JConfiguration, eventLoopGroup: EventLoopGroup) {
         self.configuration = configuration
-        self.underlyingConnection = BoltConnection(host: configuration.host, port: configuration.port, eventLoopGroup: eventLoopGroup, logger: configuration.logger)
+        self.underlyingConnection = BoltConnection(configuration: configuration.boltConfiguration, eventLoopGroup: eventLoopGroup)
     }
     
     // MARK: - Methods

@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.27.1"),
         .package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.2.0"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.0.0"),
     ],
@@ -36,8 +37,10 @@ let package = Package(
             name: "Bolt",
             dependencies: [
                 .target(name: "PackStream"),
+            
                 .product(name: "NIO", package: "swift-nio"),
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle")
             ]),

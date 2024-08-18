@@ -52,6 +52,15 @@ final class InitializationHandler: ChannelDuplexHandler {
     func handlerRemoved(context: ChannelHandlerContext) {
         if case .onGoing(let request) = state {
             request.result.fail(Errors.notInitialized)
+            self.state = .completed
+        }
+    }
+    
+    func errorCaught(context: ChannelHandlerContext, error: any Error) {
+        if case .onGoing(let request) = state {
+            // Report error.
+            request.result.fail(error)
+            self.state = .completed
         }
     }
     

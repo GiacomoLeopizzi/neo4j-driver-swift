@@ -5,6 +5,7 @@
 //  Created by Giacomo Leopizzi on 08/07/24.
 //
 
+import NIOSSL
 import NIOCore
 import Logging
 import NIOPosix
@@ -20,7 +21,7 @@ public final actor BoltConnection: Service {
     }
     
     fileprivate enum State {
-        case initial(eventLoopGroup: EventLoopGroup, host: String, port: Int, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation)
+        case initial(eventLoopGroup: EventLoopGroup, configuration: BoltConfiguration, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation)
         case running(channel: NIOAsyncChannel<Response, any Request>, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation, serverState: ServerState)
         case finished
     }
@@ -32,38 +33,49 @@ public final actor BoltConnection: Service {
     private var state: State 
     private var logger: Logger?
     
-    public init(host: String, port: Int, eventLoopGroup: EventLoopGroup, logger: Logger?) {
+    public init(configuration: BoltConfiguration, eventLoopGroup: EventLoopGroup) {
         let (stream, continuation) = AsyncStream<StreamElement>.makeStream()
-        self.state = .initial(eventLoopGroup: eventLoopGroup, host: host, port: port, stream: stream, continuation: continuation)
-        self.logger = logger
+        self.state = .initial(eventLoopGroup: eventLoopGroup, configuration: configuration, stream: stream, continuation: continuation)
+        self.logger = configuration.logger
     }
     
     public func run() async throws {
-        logger?.info("Starting BoltConnection")
-        guard case .initial(let eventLoopGroup, let host, let port, let stream, let continuation) = state else {
-            logger?.error("Attempting to run a BoltConnection that was previously started.")
-            throw BoltError(.connectionClosed, detail: "The connection to the server has been shut down.", location: .here())
-        }
-        let loggerCopy = self.logger
-        let channel = try await ClientBootstrap(group: eventLoopGroup)
-            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .channelInitializer({ $0.pipeline.addInitialHandlers() })
-            .connect(host: host, port: port)
-            .flatMap({ channel in
-                return Self.negotiate(channel: channel, logger: loggerCopy)
-            }).flatMapThrowing({ channel in
-                return try NIOAsyncChannel<Response, any Request>(wrappingChannelSynchronously: channel)
+        do {
+            logger?.info("Starting BoltConnection")
+            guard case .initial(let eventLoopGroup, let configuration, let stream, let continuation) = state else {
+                logger?.error("Attempting to run a BoltConnection that was previously started.")
+                throw BoltError(.connectionClosed, detail: "The connection to the server has been shut down.", location: .here())
+            }
+            let loggerCopy = self.logger
+            let channel = try await ClientBootstrap(group: eventLoopGroup)
+                .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .channelInitializer({ $0.pipeline.addInitialHandlers(ssl: configuration.ssl, on: $0.eventLoop) })
+                .connect(host: configuration.host, port: configuration.port)
+                .flatMap({ channel in
+                    return Self.negotiate(channel: channel, logger: loggerCopy)
+                }).flatMapThrowing({ channel in
+                    return try NIOAsyncChannel<Response, any Request>(wrappingChannelSynchronously: channel)
+                })
+                .get()
+            
+            self.state = .running(channel: channel, stream: stream, continuation: continuation, serverState: .negotiation)
+            
+            // Start evaluating the stream
+            
+            try await channel.executeThenClose({ [weak self] inbound, outbound in
+                await self?.handleChannel(inbound: inbound, outbound: outbound)
             })
-            .get()
-        
-        self.state = .running(channel: channel, stream: stream, continuation: continuation, serverState: .negotiation)
-    
-        // Start evaluating the stream
-        
-        try await channel.executeThenClose({ [weak self] inbound, outbound in
-            await self?.handleChannel(inbound: inbound, outbound: outbound)
-        })
-        self.state = .finished
+            self.state = .finished
+            
+        } catch {
+            // Channel creation failed. Fail request stream and terminate.
+            if let stream = state.stream {
+                for try await request in stream {
+                    request.continuation.resume(throwing: BoltError(.connectionClosed, location: .here()))
+                }
+            }
+            self.state = .finished
+        }
     }
     
     private func handleChannel(inbound: NIOAsyncChannelInboundStream<Response>, outbound:  NIOAsyncChannelOutboundWriter<any Request>) async {
@@ -131,15 +143,23 @@ extension BoltConnection {
         let initSent = channel.eventLoop.makePromise(of: Void.self)
         channel.writeAndFlush(initRequest, promise: initSent)
         
+        promise.futureResult.whenFailure({ error in
+            if error is NIOSSLError {
+                logger?.error("SSL error", metadata: [
+                    "error" : .string(String(describing: error))
+                ])
+            }
+        })
+        
         return initSent.futureResult
             .flatMap({ _ in promise.futureResult })
             .always({ result in
                 if case .failure = result {
-                    logger?.error("Unable to negotiate a compatible version.")
+                    logger?.error("Unable to negotiate a compatible Bolt version.")
                 }
             })
             .flatMap({ negotiatedVersion in
-                logger?.trace("Handshake completed", metadata: [
+                logger?.trace("Bolt handshake completed", metadata: [
                     "bolt_version" : .stringConvertible(negotiatedVersion)
                 ])
                 return channel.pipeline
@@ -153,8 +173,16 @@ fileprivate extension BoltConnection.State {
     
     var requestContinuation: AsyncStream<BoltConnection.StreamElement>.Continuation? {
         switch self {
-        case .initial(_, _, _, _, let continuation): return continuation
+        case .initial(_, _, _, let continuation): return continuation
         case .running(_, _, let continuation, _): return continuation
+        case .finished: return nil
+        }
+    }
+    
+    var stream: AsyncStream<BoltConnection.StreamElement>? {
+        switch self {
+        case .initial(_, _, let stream, _): return stream
+        case .running(_, let stream, _, _): return stream
         case .finished: return nil
         }
     }

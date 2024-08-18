@@ -6,12 +6,25 @@
 //
 
 import NIO
+import NIOSSL
 import NIOExtras
 
 extension ChannelPipeline {
         
-    func addInitialHandlers() -> EventLoopFuture<Void> {
-        return self.addHandler(InitializationHandler())
+    func addInitialHandlers(ssl: BoltConfiguration.SSL?, on eventLoop: EventLoop) -> EventLoopFuture<Void> {
+        guard let ssl = ssl else {
+            // SSL not enabled, just add initialization handler.
+            return self.addHandler(InitializationHandler())
+        }
+        do {
+            // Add the SSL handler first.
+            let handler = try NIOSSLClientHandler(context: ssl.context, serverHostname: ssl.serverHostname, customVerificationCallback: ssl.customVerificationCallback, configuration: .init())
+            return self.addHandler(handler).flatMap({
+                return self.addHandler(InitializationHandler())
+            })
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
     }
     
     func configAfterInitialization() -> EventLoopFuture<Void> {
