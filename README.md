@@ -10,10 +10,11 @@ This is a Swift Package that provides a convenient way to communicate with [Neo4
 
 :rocket: **Concurrency**: Built with Swift 6, leveraging async/await for efficient concurrency.
 
-:lock: **SSL**: Includes support for SSL connections to the database.
+:lock: **SSL**: Supports secure connections to the database.
 
 :gear: **Flexibility**: Allows for both high-level automation and low-level control of the Bolt connection.
 
+:cloud: **AuraDB**: Compatible with [Neo4J AuraDB](https://neo4j.com/cloud/platform/aura-graph-database/).
 
 ## Getting Started
 
@@ -140,6 +141,13 @@ struct Example {
     }
 }
 ```
+
+The driver also supports connections to [Neo4J AuraDB](https://neo4j.com/cloud/platform/aura-graph-database/). To make the previous example work with AuraDB, the only change needed is in the configuration object, which can be easily created using the `connectionURI` initializer parameter. An example of this is:
+
+```swift
+let configuration = try Neo4JConfiguration(connectionURI: "neo4j+s://xxxxxxxx.databases.neo4j.io", userAgent: "Example/0.0.0", auth: .basic(password: "the provided password"), logger: logger)
+```
+
 
 ### Neo4J Connection API
 

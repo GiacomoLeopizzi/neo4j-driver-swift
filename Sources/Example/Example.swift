@@ -20,10 +20,7 @@ struct Example {
         )
         
         // Instantiate a new Neo4JConnection actor
-        let neo4jConnection = Neo4JConnection(
-            configuration: configuration,
-            eventLoopGroup: eventLoopGroup
-        )
+        let neo4jConnection = Neo4JConnection(configuration: configuration, eventLoopGroup: eventLoopGroup)
         
         // Initialize the service group
         let serviceGroup = ServiceGroup(services: [neo4jConnection], logger: self.logger)
@@ -43,13 +40,13 @@ struct Example {
             try await neo4jConnection.run(query: """
                 CREATE (bttf:Movie {title: "Back to the Future", released: 1985,
                 tagline: "He's the only kid ever to get into trouble before he was born."})
-            """)
+                """)
             
             // Create a relationship between the two nodes
             try await neo4jConnection.run(query: """
                 MATCH (director:Person {name: "Robert Zemeckis"}), (movie:Movie {title: "Back to the Future"})
                 CREATE (director)-[:DIRECTED]->(movie)
-            """)
+                """)
             
             // Use the run method to return data. The `decodingResultsAs` parameter
             // allows decoding the data already cast to the correct Swift type.
@@ -80,7 +77,7 @@ struct Example {
             let metadata = try await neo4jConnection.run(query: """
                 MATCH (director:Person {name: "Robert Zemeckis"}), (movie:Movie {title: "Back to the Future"})
                 DETACH DELETE director, movie
-            """)
+                """)
             print(metadata.stats?.description ?? "")
             
             // Cancel all tasks in the task group.
