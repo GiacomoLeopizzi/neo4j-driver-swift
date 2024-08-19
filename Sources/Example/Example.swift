@@ -13,9 +13,8 @@ struct Example {
     static func main() async throws {
         let configuration = Neo4JConfiguration(
             host: "127.0.0.1",
-            port: 7687,
             userAgent: "Example/0.0.0",
-            auth: .basic(username: "neo4j", password: "12345678"),
+            auth: .basic(password: "12345678"),
             logger: logger
         )
         
