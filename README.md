@@ -1,5 +1,8 @@
 # Neo4J Swift Driver
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FGiacomoLeopizzi%2Fneo4j-driver-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/GiacomoLeopizzi/neo4j-driver-swift) 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FGiacomoLeopizzi%2Fneo4j-driver-swift%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/GiacomoLeopizzi/neo4j-driver-swift)
+
 > [!WARNING]
 > This library is currently under active development. It may contain bugs, and its API is subject to change until the first stable release is published. Please use with caution and expect potential breaking changes in future updates.
 
