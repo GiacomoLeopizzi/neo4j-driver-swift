@@ -6,7 +6,6 @@
 //
 
 import Bolt
-import Observation
 
 public protocol NodeProperties: Codable, Hashable, Sendable {
     
