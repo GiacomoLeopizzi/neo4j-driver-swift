@@ -21,7 +21,7 @@ public final actor BoltConnection: Service {
     }
     
     fileprivate enum State {
-        case initial(eventLoopGroup: EventLoopGroup, configuration: BoltConfiguration, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation)
+        case initial(configuration: BoltConfiguration, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation)
         case running(channel: NIOAsyncChannel<Response, any Request>, stream: AsyncStream<StreamElement>, continuation: AsyncStream<StreamElement>.Continuation, serverState: ServerState)
         case finished
     }
@@ -30,24 +30,31 @@ public final actor BoltConnection: Service {
         state.serverState
     }
     
-    private var state: State 
+    public nonisolated var unownedExecutor: UnownedSerialExecutor {
+        eventLoop.executor.asUnownedSerialExecutor()
+    }
+    
+    private nonisolated let eventLoop: EventLoop
+    private var state: State
     private var logger: Logger?
     
-    public init(configuration: BoltConfiguration, eventLoopGroup: EventLoopGroup) {
+    public init(configuration: BoltConfiguration, eventLoop: EventLoop) {
         let (stream, continuation) = AsyncStream<StreamElement>.makeStream()
-        self.state = .initial(eventLoopGroup: eventLoopGroup, configuration: configuration, stream: stream, continuation: continuation)
+        self.eventLoop = eventLoop
+        self.state = .initial(configuration: configuration, stream: stream, continuation: continuation)
         self.logger = configuration.logger
     }
     
     public func run() async throws {
+        eventLoop.assertInEventLoop()
         do {
             logger?.info("Starting BoltConnection")
-            guard case .initial(let eventLoopGroup, let configuration, let stream, let continuation) = state else {
+            guard case .initial(let configuration, let stream, let continuation) = state else {
                 logger?.error("Attempting to run a BoltConnection that was previously started.")
                 throw BoltError(.connectionClosed, detail: "The connection to the server has been shut down.", location: .here())
             }
             let loggerCopy = self.logger
-            let channel = try await ClientBootstrap(group: eventLoopGroup)
+            let channel = try await ClientBootstrap(group: eventLoop)
                 .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer({ $0.pipeline.addInitialHandlers(ssl: configuration.ssl, on: $0.eventLoop) })
                 .connect(host: configuration.host, port: configuration.port)
@@ -173,7 +180,7 @@ fileprivate extension BoltConnection.State {
     
     var requestContinuation: AsyncStream<BoltConnection.StreamElement>.Continuation? {
         switch self {
-        case .initial(_, _, _, let continuation): return continuation
+        case .initial(_, _, let continuation): return continuation
         case .running(_, _, let continuation, _): return continuation
         case .finished: return nil
         }
@@ -181,7 +188,7 @@ fileprivate extension BoltConnection.State {
     
     var stream: AsyncStream<BoltConnection.StreamElement>? {
         switch self {
-        case .initial(_, _, let stream, _): return stream
+        case .initial(_, let stream, _): return stream
         case .running(_, let stream, _, _): return stream
         case .finished: return nil
         }

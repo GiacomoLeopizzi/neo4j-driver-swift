@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "neo4j-driver-swift",
-    platforms: [.macOS(.v10_15)],
+    platforms: [.macOS(.v14)],
     products: [
         .executable(name: "Example", targets: ["Example"]),
         

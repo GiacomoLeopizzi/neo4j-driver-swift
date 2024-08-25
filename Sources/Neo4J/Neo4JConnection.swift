@@ -17,12 +17,15 @@ public actor Neo4JConnection: Service {
     /// The configuration provided for the connection.
     private let configuration: Neo4JConfiguration
     /// The underlying Bolt connection used to perform requests.
-    public let underlyingConnection: BoltConnection
+    public nonisolated let underlyingConnection: BoltConnection
     /// The server state, taken from the underlying connection.
     public var serverState: ServerState {
         get async {
             await underlyingConnection.serverState
         }
+    }
+    public nonisolated var unownedExecutor: UnownedSerialExecutor {
+        self.underlyingConnection.unownedExecutor
     }
     
     // MARK: - Initialization
@@ -32,8 +35,16 @@ public actor Neo4JConnection: Service {
     ///   - configuration: The configuration used to create the connection.
     ///   - eventLoopGroup: The event loop group used to open the connection.
     public init(configuration: Neo4JConfiguration, eventLoopGroup: EventLoopGroup) {
+        self.init(configuration: configuration, eventLoop: eventLoopGroup.next())
+    }
+    
+    /// Creates a new Neo4J connection.
+    /// - Parameters:
+    ///   - configuration: The configuration used to create the connection.
+    ///   - eventLoop: The event loop  used to open the connection.
+    public init(configuration: Neo4JConfiguration, eventLoop: EventLoop) {
         self.configuration = configuration
-        self.underlyingConnection = BoltConnection(configuration: configuration.boltConfiguration, eventLoopGroup: eventLoopGroup)
+        self.underlyingConnection = BoltConnection(configuration: configuration.boltConfiguration, eventLoop: eventLoop)
     }
     
     // MARK: - Methods
