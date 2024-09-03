@@ -12,7 +12,6 @@ public struct Neo4JError: Error {
     enum Base: String {
         case generic = "Generic error."
         
-        case invalidState = "Invalid state."
         case invalidConnectionURI = "Connection URI is not valid."
         case indexOutOfRange = "Index out of range."
     }

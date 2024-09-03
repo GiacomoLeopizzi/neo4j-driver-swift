@@ -23,7 +23,7 @@ This is a Swift Package that provides a convenient way to communicate with [Neo4
 
 ### Overview
 
-The package includes three libraries:
+The package includes the libraries:
 
 - **PackStream**: Handles encoding and decoding binary data using the PackStream protocol. Typically, users of this library won't need to interact with it directly.
 - **Bolt**: Facilitates communication using the Bolt protocol. This library exposes types that allow developers to interact with a Neo4J database using the raw Bolt protocol.
@@ -144,6 +144,25 @@ The driver also supports connections to [Neo4J AuraDB](https://neo4j.com/cloud/p
 let configuration = try Neo4JConfiguration(connectionURI: "neo4j+s://xxxxxxxx.databases.neo4j.io", userAgent: "Example/0.0.0", auth: .basic(password: "the provided password"), logger: logger)
 ```
 
+### Connection Pools
+
+The driver includes an initial version of connection pooling mechanisms, which can be utilized as follows:
+
+* `Neo4JConnectionPool`: Creates a pool of `Neo4JConnection` instances.
+* `BoltConnectionPool`: Creates a pool of `BoltConnection` instances.
+
+Each pool is created for every `EventLoop` within the provided `EventLoopGroup`. The connection pools are implemented as services, so they need to be added to a `ServiceGroup` to function properly.
+
+
+Example of a Pool for Neo4J Connections:
+
+```swift
+// Create the Neo4J connection pool with the event loop group.
+let eventLoopGroupPool = Neo4JConnectionPool(eventLoopGroup: eventLoopGroup, poolConfiguration: poolConfiguration, neo4JConfiguration: neo4JConfiguration)
+
+// Initialize the service group and add the pool as a service.
+let serviceGroup = ServiceGroup(services: [eventLoopGroupPool], logger: self.logger)
+```
 
 ### Neo4J Connection API
 
@@ -208,6 +227,6 @@ Contributions are highly encouraged as the library is still under development. S
 - Reviewing the Neo4J API to make it easier to work with Node and Relationship types, including methods to create and fetch them without manually writing Cypher queries;
 - Creating a declarative syntax for expressing Cypher queries that allows for runtime and compile-time checks;
 - Fixing bugs that may exist and addressing issues reported on GitHub;
-- Develop a ConnectionPool actor.
+- Review the ConnectionPool library.
 
 Special thanks to [@SMartorelli](https://github.com/SMartorelli) and [@ndPPPhz](https://github.com/ndPPPhz) for their contributions to this project!
