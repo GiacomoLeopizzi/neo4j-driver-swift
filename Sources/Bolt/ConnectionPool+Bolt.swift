@@ -65,10 +65,10 @@ public extension BoltConnectionPool {
     ///
     /// - Parameters:
     ///   - eventLoopGroup: The event loop group that the connection pool will use.
-    ///   - poolConfifuration: The configuration settings for the connection pool.
+    ///   - poolConfiguration: The configuration settings for the connection pool.
     ///   - boltConfiguration: The configuration settings for the Bolt connections.
-    convenience init(eventLoopGroup: EventLoopGroup, poolConfifuration: PoolConfiguration, boltConfiguration: BoltConfiguration) {
+    convenience init(eventLoopGroup: EventLoopGroup, poolConfiguration: PoolConfiguration, boltConfiguration: BoltConfiguration) {
         let factory = BoltConnectionFactory(configuration: boltConfiguration)
-        self.init(eventLoopGroup: eventLoopGroup, factory: factory, confifuration: poolConfifuration)
+        self.init(eventLoopGroup: eventLoopGroup, factory: factory, configuration: poolConfiguration)
     }
 }

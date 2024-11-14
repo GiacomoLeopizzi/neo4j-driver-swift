@@ -67,10 +67,10 @@ public extension Neo4JConnectionPool {
     ///
     /// - Parameters:
     ///   - eventLoopGroup: The event loop group that the connection pool will use.
-    ///   - poolConfifuration: The configuration settings for the connection pool.
+    ///   - poolConfiguration: The configuration settings for the connection pool.
     ///   - neo4JConfiguration: The configuration settings for the Neo4J connections.
-    convenience init(eventLoopGroup: EventLoopGroup, poolConfifuration: PoolConfiguration, neo4JConfiguration: Neo4JConfiguration) {
+    convenience init(eventLoopGroup: EventLoopGroup, poolConfiguration: PoolConfiguration, neo4JConfiguration: Neo4JConfiguration) {
         let factory = Neo4JConnectionFactory(configuration: neo4JConfiguration)
-        self.init(eventLoopGroup: eventLoopGroup, factory: factory, confifuration: poolConfifuration)
+        self.init(eventLoopGroup: eventLoopGroup, factory: factory, configuration: poolConfiguration)
     }
 }

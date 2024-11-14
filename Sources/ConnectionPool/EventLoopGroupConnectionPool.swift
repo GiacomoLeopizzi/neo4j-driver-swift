@@ -39,14 +39,14 @@ public final class EventLoopGroupConnectionPool<Factory: PoolableConnectionFacto
     /// - Parameters:
     ///   - eventLoopGroup: The event loop group that the connection pools will be associated with.
     ///   - factory: The factory used to create connections for each event loop's pool.
-    ///   - confifuration: The configuration of the pool.
-    public init(eventLoopGroup: EventLoopGroup, factory: Factory, confifuration: PoolConfiguration) {
+    ///   - configuration: The configuration of the pool.
+    public init(eventLoopGroup: EventLoopGroup, factory: Factory, configuration: PoolConfiguration) {
         self.eventLoopGroup = eventLoopGroup
         self.factory = factory
         self.storage = Dictionary(uniqueKeysWithValues: eventLoopGroup.makeIterator().map({
             return ($0.objectID, EventLoopConnectionPool<Factory>(eventLoop: $0,
                                                                   factory: factory,
-                                                                  configuration: confifuration))
+                                                                  configuration: configuration))
         }))
     }
     
