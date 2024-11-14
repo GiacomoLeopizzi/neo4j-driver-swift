@@ -8,6 +8,7 @@
 import NIOCore
 #if canImport(NIOFoundationCompat)
 import NIOFoundationCompat
+import Foundation
 #endif
 
 extension CodingUserInfoKey {
